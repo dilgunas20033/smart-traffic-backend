@@ -1,0 +1,5 @@
+[
+  {"$dtId":"SEG-001","$metadata":{"$model":"dtmi:fgcu:traffic:RoadSegment;1"},"segmentId":"SEG-001","name":"1st Ave S","lanes":2,"speedLimit":35},
+  {"$dtId":"SEG-002","$metadata":{"$model":"dtmi:fgcu:traffic:RoadSegment;1"},"segmentId":"SEG-002","name":"2nd Ave S","lanes":2,"speedLimit":35},
+  {"$dtId":"SEG-003","$metadata":{"$model":"dtmi:fgcu:traffic:RoadSegment;1"},"segmentId":"SEG-003","name":"3rd Ave S","lanes":4,"speedLimit":45}
+]

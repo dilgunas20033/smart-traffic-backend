@@ -1,0 +1,14 @@
+{
+  "@id": "dtmi:fgcu:traffic:Sensor;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;2",
+  "displayName": "Sensor",
+  "contents": [
+    {"@type":"Property","name":"sensorId","schema":"string"},
+    {"@type":"Property","name":"type","schema":"string"},
+    {"@type":"Property","name":"lat","schema":"double"},
+    {"@type":"Property","name":"lon","schema":"double"},
+    {"@type":"Property","name":"lastSeen","schema":"dateTime"},
+    {"@type":"Property","name":"status","schema":"string"}
+  ]
+}

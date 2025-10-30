@@ -1,0 +1,26 @@
+{
+  "@id": "dtmi:fgcu:traffic:RoadSegment;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;2",
+  "displayName": "Road Segment",
+  "contents": [
+    { "@type": "Property", "name": "segmentId", "schema": "string" },
+    { "@type": "Property", "name": "name", "schema": "string" },
+    { "@type": "Property", "name": "lanes", "schema": "integer" },
+    { "@type": "Property", "name": "speedLimit", "schema": "integer" },
+    { "@type": "Property", "name": "avgSpeed", "schema": "double" },
+    { "@type": "Property", "name": "volume", "schema": "double" },
+    { "@type": "Property", "name": "PCI", "schema": "double" },
+    { "@type": "Property", "name": "IRI", "schema": "double" },
+    { "@type": "Property", "name": "asOf", "schema": "dateTime" },
+    { "@type": "Property", "name": "predictedAvgSpeed", "schema": "double" },
+    { "@type": "Property", "name": "predictedCongestionIndex", "schema": "double" },
+    { "@type": "Property", "name": "predictedPCI", "schema": "double" },
+    { "@type": "Property", "name": "predictionTimestamp", "schema": "dateTime" },
+    { "@type": "Property", "name": "predictionHorizon", "schema": "string" },
+
+    { "@type": "Relationship", "name": "connectedTo", "target": "dtmi:fgcu:traffic:RoadSegment;1" },
+    { "@type": "Relationship", "name": "hasSensor", "target": "dtmi:fgcu:traffic:Sensor;1" },
+    { "@type": "Relationship", "name": "hasPavementAsset", "target": "dtmi:fgcu:traffic:PavementAsset;1" }
+  ]
+}

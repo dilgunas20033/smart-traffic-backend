@@ -1,0 +1,10 @@
+{
+  "@id": "dtmi:fgcu:traffic:Road;1",
+  "@type": "Interface",
+  "@context": "dtmi:dtdl:context;2",
+  "displayName": "Road",
+  "contents": [
+    {"@type":"Property","name":"roadId","schema":"string"},
+    {"@type":"Property","name":"name","schema":"string"}
+  ]
+}
