@@ -1,5 +1,11 @@
-# external_segment_id,adt_segment_id
-# Fill this mapping so the fetch_dot_traffic function can translate FDOT IDs to your ADT twin IDs.
-# Example:
-# 12345,Segment_A
-# 67890,Segment_B
+SEG-001,SEG-001
+SEG123,Segment_001
+SEG124,Segment_002
+SEG125,Segment_003
+SEG126,Segment_004
+SEG127,Segment_005
+SEG128,Segment_006
+SEG129,Segment_007
+SEG130,Segment_008
+SEG131,Segment_009
+SEG132,Segment_010

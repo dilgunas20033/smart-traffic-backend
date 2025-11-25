@@ -91,11 +91,17 @@ def fetch_authenticated_feed(url: str):
         if not logged_in:
             logging.warning("Login heuristics did not confirm session; proceeding to fetch feed anyway.")
         feed_resp = session.get(url, timeout=30)
+        if feed_resp.status_code == 401:
+            logging.error("Authenticated feed returned 401 Unauthorized; returning empty feed.")
+            return "<?xml version='1.0'?><rss><channel></channel></rss>"
         feed_resp.raise_for_status()
         return feed_resp.text
     except Exception as ex:
         logging.error(f"Authenticated fetch failed: {ex}; falling back to direct.")
         resp = requests.get(url, timeout=30)
+        if resp.status_code == 401:
+            logging.error("Direct feed fetch also 401 Unauthorized; returning empty feed.")
+            return "<?xml version='1.0'?><rss><channel></channel></rss>"
         resp.raise_for_status()
         return resp.text
 

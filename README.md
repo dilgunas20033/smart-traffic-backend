@@ -1,6 +1,6 @@
 # Smart Traffic Backend (FGCU)
 
-Cloud backend integrating Florida Department of Transportation (FDOT) traffic & pavement data into Azure Digital Twins (ADT) with prediction fields and query APIs.
+Cloud backend integrating real-time incident data (RITIS) and pavement/segment metadata into Azure Digital Twins (ADT) with prediction fields and query APIs.
 
 ## What This Does
 - Defines digital models for Roads, Segments, Sensors, Pavement Assets.
@@ -16,8 +16,7 @@ functions/adt_ingest/  Azure Functions (HTTP + Timer triggers)
 ingestion/             CSV seeds, segment mapping, history snapshots
 ```
 
-## New Functions Added
-- `fetch_dot_traffic` (Timer every 5 min): Pulls FDOT data, normalizes, updates twins, stores snapshot.
+## Functions
 - `list_segments` (HTTP GET /segments): Returns all segment twins and key fields.
 - `fetch_ritis_incidents` (Timer every 10 min): Authenticated HTML RSS incident parsing, lane impact extraction, patches incident properties to v2 twins.
 
@@ -26,8 +25,6 @@ ingestion/             CSV seeds, segment mapping, history snapshots
 |------|---------|
 | `ADT_ENDPOINT` | Base URL of your ADT instance (e.g. https://<name>.api.<region>.digitaltwins.azure.net) |
 | `STORAGE_ACCOUNT_NAME` | Storage account name for blob snapshots & mapping file. |
-| `FDOT_TRAFFIC_API_URL` | Florida traffic data endpoint (see below). |
-| `FDOT_API_KEY` | API key or token if FDOT endpoint requires auth (optional). |
 | `SEGMENT_MAP_CONTAINER` | Blob container holding `segment_map.csv` (default `raw`). |
 | `SEGMENT_MAP_BLOB` | Blob name (default `segment_map.csv`). |
 | `TRAFFIC_HISTORY_CONTAINER` | Container for snapshot archives (default `raw`). |
@@ -47,16 +44,16 @@ external_segment_id,adt_segment_id
 12345,Segment_001
 67890,Segment_002
 ```
-External IDs come from FDOT data; ADT IDs match twins you seeded.
+External IDs can come from any future traffic feed you integrate; ADT IDs match twins you seeded. (RITIS incidents currently map by segment naming conventions.)
 
 ## Data Source (RITIS-Only Mode)
-This deployment uses the RITIS incident RSS feed as the sole real-time data source. RITIS aggregates FDOT and regional traffic data. In the absence of a direct per-segment speed feed, we derive a simple congestion heuristic from lane closure ratios:
+This deployment uses the RITIS incident RSS feed as the sole real-time data source. In the absence of a direct per-segment speed/volume feed, we derive a simple congestion heuristic from lane closure ratios:
 
 Congestion Index = AffectedLanes / TotalLanes (clamped 0..1).
 
 The same value is temporarily mirrored to `predictedCongestionIndex` until a predictive model is implemented. When you add a true speed/volume data feed later, remove or override this heuristic.
 
-Deactivate the legacy `fetch_dot_traffic` function by deleting its folder or removing its timer trigger if not used.
+The legacy FDOT polling function has been removed. Add a new speed/volume ingestion function later if a suitable feed becomes available.
 
 ## Running Locally
 Install requirements inside the Functions folder (from repo root in PowerShell):
@@ -77,7 +74,7 @@ curl http://localhost:7071/api/get_congestion_top?threshold=0.7
 Future additions: pavement status listing, historical export, sensor health, prediction pipeline trigger.
 
 ## Resilience Notes
-- HTTP Resilience: Simple retry on 429 for FDOT fetch; extend with exponential/backoff later.
+-- HTTP Resilience: (Future) Add retry/backoff for any added speed/volume feeds.
 - Auth Resilience: RITIS login heuristics attempt multiple common form field names; failure falls back to direct fetch.
 - Idempotency: ADT patch operations are additive and safe to repeat; consider ETag conditions for concurrency.
 - Mapping Validation: Unknown external IDs skipped to prevent orphan twins.
@@ -97,12 +94,11 @@ Script: `scripts/migrate_to_v2.py`
 Use Azure Key Vault for secrets (RITIS credentials, API keys) in production. `.env.example` included for local convenience.
 
 ## Next Steps
-1. Acquire actual FDOT endpoint + token; set env vars.
-2. Complete `segment_map.csv` using real segment IDs.
-3. Seed ADT with segments matching mapping.
-4. Verify timer function updates speed/volume fields.
-5. Add pavement ingestion (daily) if dataset available.
-6. Implement historical ML training pipeline.
+1. Complete `segment_map.csv` using real segment IDs (matching your ADT twins).
+2. Seed ADT with segments matching mapping.
+3. Verify timer incident function patches lane impact + congestion properties.
+4. Add pavement ingestion (daily) if dataset available.
+5. Implement historical ML training pipeline.
 
 ## Cost Considerations (To Document Later)
 - Function executions (every 5 min) vs data size
@@ -111,4 +107,4 @@ Use Azure Key Vault for secrets (RITIS credentials, API keys) in production. `.e
 - ML training cadence
 
 ## License / Usage
-Internal academic project (FGCU) using public transportation data. Respect FDOT terms of use when calling APIs.
+Internal academic project (FGCU) using public transportation data. Respect data provider terms of use for any added feeds.
