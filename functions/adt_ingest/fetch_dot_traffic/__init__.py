@@ -1,6 +1,5 @@
-import os, logging, csv, io, datetime, json, requests
-from typing import Dict
-from shared import get_clients
+import os, logging, datetime, json, requests
+from shared import get_clients, load_segment_map
 
 # Expected env vars:
 # FDOT_TRAFFIC_API_URL - base endpoint for FDOT traffic data (JSON)
@@ -11,26 +10,6 @@ from shared import get_clients
 
 RATE_LIMIT_SLEEP_SECONDS = 2
 
-def load_segment_map(blob_client) -> Dict[str, str]:
-    container = os.environ.get("SEGMENT_MAP_CONTAINER", "raw")
-    name = os.environ.get("SEGMENT_MAP_BLOB", "segment_map.csv")
-    try:
-        data = blob_client.get_blob_client(container=container, blob=name).download_blob().readall()
-        f = io.StringIO(data.decode())
-        reader = csv.reader(f)
-        mapping = {}
-        for row in reader:
-            if not row or row[0].startswith('#'):  # comments
-                continue
-            if len(row) < 2:
-                continue
-            ext_id, twin_id = row[0].strip(), row[1].strip()
-            if ext_id and twin_id:
-                mapping[ext_id] = twin_id
-        return mapping
-    except Exception as e:
-        logging.warning(f"Segment map not loaded: {e}")
-        return {}
 
 def fetch_fdot_json() -> list:
     base = os.environ.get("FDOT_TRAFFIC_API_URL")

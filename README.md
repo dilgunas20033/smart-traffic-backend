@@ -19,6 +19,7 @@ ingestion/             CSV seeds, segment mapping, history snapshots
 ## New Functions Added
 - `fetch_dot_traffic` (Timer every 5 min): Pulls FDOT data, normalizes, updates twins, stores snapshot.
 - `list_segments` (HTTP GET /segments): Returns all segment twins and key fields.
+- `fetch_ritis_incidents` (Timer every 10 min): Authenticated HTML RSS incident parsing, lane impact extraction, patches incident properties to v2 twins.
 
 ## Environment Variables (local.settings.json or Azure App Settings)
 | Name | Purpose |
@@ -31,6 +32,13 @@ ingestion/             CSV seeds, segment mapping, history snapshots
 | `SEGMENT_MAP_BLOB` | Blob name (default `segment_map.csv`). |
 | `TRAFFIC_HISTORY_CONTAINER` | Container for snapshot archives (default `raw`). |
 | `APPLICATIONINSIGHTS_CONNECTION_STRING` | (Optional) Enable richer telemetry. |
+| `RITIS_RSS_URL` | RITIS/Regional incident HTML RSS feed URL. |
+| `RITIS_LOGIN_URL` | Login form URL for authenticated RITIS session. |
+| `RITIS_EMAIL` | Account email for RITIS feed access. |
+| `RITIS_PASSWORD` | Account password (consider Key Vault in production). |
+| `ROADSEGMENT_V2_ID` | New model ID for RoadSegment v2 (default dtmi:fgcu:traffic:RoadSegment;2). |
+| `ROADSEGMENT_V2_SUFFIX` | Suffix for migrated twin IDs (default `_v2`). |
+| `ROADSEGMENT_V2_DRY_RUN` | Set `false` to perform migration, otherwise dry run. |
 
 ## Segment Mapping
 Populate `ingestion/segment_map.csv` with pairs:
@@ -41,23 +49,14 @@ external_segment_id,adt_segment_id
 ```
 External IDs come from FDOT data; ADT IDs match twins you seeded.
 
-## FDOT Data Source Options
-You can obtain Florida traffic data from:
-1. Florida Open Data Portal (search for "Traffic", "Speed", "Volume"): https://data.fdot.gov/
-2. Statewide FDOT ITS data (detector feeds) often accessible through regional XML/JSON endpoints.
-3. National Transportation Data (USDOT / Bureau of Transportation Statistics): https://data.transportation.gov/ (filter for Florida & roadway performance).
+## Data Source (RITIS-Only Mode)
+This deployment uses the RITIS incident RSS feed as the sole real-time data source. RITIS aggregates FDOT and regional traffic data. In the absence of a direct per-segment speed feed, we derive a simple congestion heuristic from lane closure ratios:
 
-If you need a key or registration, create an account at:
-- Florida Open Data Portal: https://data.fdot.gov/ (Sign In / Register top right)
-- USDOT Open Data (for supplemental datasets): https://data.transportation.gov/signup
+Congestion Index = AffectedLanes / TotalLanes (clamped 0..1).
 
-Pick a dataset offering per-segment speed & volume. Get the API endpoint (usually a Socrata-style URL ending with `.json` or including `?$query=`). Set that as `FDOT_TRAFFIC_API_URL`.
+The same value is temporarily mirrored to `predictedCongestionIndex` until a predictive model is implemented. When you add a true speed/volume data feed later, remove or override this heuristic.
 
-### Example Socrata API Pattern
-```
-https://data.fdot.gov/resource/<dataset_id>.json?$limit=5000
-```
-Add filters for date/time if required. If the portal uses App Tokens, add it to `FDOT_API_KEY` (Bearer or header token depending on docs).
+Deactivate the legacy `fetch_dot_traffic` function by deleting its folder or removing its timer trigger if not used.
 
 ## Running Locally
 Install requirements inside the Functions folder (from repo root in PowerShell):
@@ -78,9 +77,24 @@ curl http://localhost:7071/api/get_congestion_top?threshold=0.7
 Future additions: pavement status listing, historical export, sensor health, prediction pipeline trigger.
 
 ## Resilience Notes
-- Retries: Basic backoff on HTTP 429 (rate limit). Enhance with exponential strategy later.
-- Idempotency: ADT patch operations safe to repeat.
-- Logging: Azure Functions logs show update counts.
+- HTTP Resilience: Simple retry on 429 for FDOT fetch; extend with exponential/backoff later.
+- Auth Resilience: RITIS login heuristics attempt multiple common form field names; failure falls back to direct fetch.
+- Idempotency: ADT patch operations are additive and safe to repeat; consider ETag conditions for concurrency.
+- Mapping Validation: Unknown external IDs skipped to prevent orphan twins.
+- Error Handling: Non-fatal ingestion errors logged; snapshots still attempted.
+- Future Hardening: Structured logging (App Insights), schema validation, retry budget, circuit breaker.
+
+## Migration to RoadSegment v2
+`dtdl/RoadSegment.v2.json` adds incident properties (lane impact, direction, last update). Existing twins using `;1` cannot change model ID directly; create new twins with a suffix and migrate relationships.
+
+Script: `scripts/migrate_to_v2.py`
+1. Set `ADT_ENDPOINT` and optional `ROADSEGMENT_V2_*` vars.
+2. Run `python scripts/migrate_to_v2.py` (dry run default).
+3. Set `ROADSEGMENT_V2_DRY_RUN=false` to perform migration.
+4. Recreate relationships for new twins (connectedTo, hasSensor, hasPavementAsset).
+5. Update dashboards / queries to reference suffixed IDs.
+
+Use Azure Key Vault for secrets (RITIS credentials, API keys) in production. `.env.example` included for local convenience.
 
 ## Next Steps
 1. Acquire actual FDOT endpoint + token; set env vars.

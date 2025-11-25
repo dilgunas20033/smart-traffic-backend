@@ -1,0 +1,31 @@
+{
+  "@id": "dtmi:fgcu:traffic:RoadSegment;2",
+  "@type": "Interface",
+  "displayName": "Road Segment",
+  "description": "A road segment with live, historical, predictive, and incident-related traffic and pavement properties.",
+  "contents": [
+    {"@type": "Property", "name": "avgSpeed", "schema": "double", "description": "Current average speed (mph)."},
+    {"@type": "Property", "name": "volume", "schema": "double", "description": "Current traffic volume (vehicles per interval)."},
+    {"@type": "Property", "name": "congestionIndex", "schema": "double", "description": "Calculated congestion index (0-1)."},
+    {"@type": "Property", "name": "pci", "schema": "double", "description": "Pavement Condition Index (0-100)."},
+    {"@type": "Property", "name": "iri", "schema": "double", "description": "International Roughness Index."},
+    {"@type": "Property", "name": "status", "schema": "string", "description": "General operational status or incident status (active/cleared)."},
+    {"@type": "Property", "name": "lastSeen", "schema": "dateTime", "description": "Timestamp of last data or incident update ingested."},
+
+    {"@type": "Property", "name": "predictedAvgSpeed", "schema": "double", "description": "Predicted average speed (near future)."},
+    {"@type": "Property", "name": "predictedCongestionIndex", "schema": "double", "description": "Predicted congestion index (near future)."},
+    {"@type": "Property", "name": "predictedPCI", "schema": "double", "description": "Predicted pavement condition index."},
+
+    {"@type": "Property", "name": "incidentAffectedLanes", "schema": "integer", "description": "Number of lanes affected by current incident."},
+    {"@type": "Property", "name": "incidentTotalLanes", "schema": "integer", "description": "Total number of lanes for this segment in direction of incident."},
+    {"@type": "Property", "name": "incidentLaneImpact", "schema": "string", "description": "Text description of lane impact / closure details."},
+    {"@type": "Property", "name": "incidentDirection", "schema": "string", "description": "Direction of travel affected (e.g., NB, SB, EB, WB)."},
+    {"@type": "Property", "name": "incidentLastUpdate", "schema": "dateTime", "description": "Parsed 'Last Update Time' from incident feed."}
+  ],
+  "relationships": [
+    {"@type": "Relationship", "name": "connectedTo", "target": "dtmi:fgcu:traffic:RoadSegment;2"},
+    {"@type": "Relationship", "name": "hasSensor", "target": "dtmi:fgcu:traffic:Sensor;1"},
+    {"@type": "Relationship", "name": "hasPavementAsset", "target": "dtmi:fgcu:traffic:PavementAsset;1"}
+  ],
+  "@context": "dtmi:dtdl:context;2"
+}
