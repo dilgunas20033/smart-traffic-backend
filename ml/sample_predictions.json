@@ -1,0 +1,14 @@
+[
+  {
+    "adtSegmentId": "segment-001",
+    "congestionIndex": 0.42,
+    "confidence": 0.9,
+    "timestamp": 1733090000
+  },
+  {
+    "adtSegmentId": "segment-002",
+    "congestionIndex": 0.77,
+    "confidence": 0.86,
+    "timestamp": 1733090000
+  }
+]
